@@ -1,6 +1,6 @@
 # Bogle3
 
-A simple, free calculator for the Bogleheads 3-fund portfolio. No accounts, no fees, no tracking - just a tool to help you allocate your investments correctly.
+A simple, free calculator for the Bogleheads 3-fund portfolio.
 
 **Live at: https://narkeeso.github.io/bogle3/**
 
@@ -36,18 +36,6 @@ Select your broker to see the recommended funds for each category.
 - Tailwind CSS (via CDN)
 - Vanilla JavaScript
 - LocalStorage for persistence
-
-## Project Structure
-
-```
-index.html    # Everything in one file
-```
-
-That's it. Grug brain simple.
-
-## Why This Exists
-
-Fidelity and others offer "buckets" but they want your money under management. This is a free alternative - you do the math here, then manually fund your accounts at Vanguard/Fidelity/Schwab yourself.
 
 ---
 
