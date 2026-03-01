@@ -8,24 +8,86 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen">
-    <div class="max-w-2xl mx-auto p-6" x-data="bogle3Data()" x-init="init()">
+    <div class="max-w-6xl mx-auto p-6" x-data="bogle3Data()" x-init="init()">
 
-        <!-- Header -->
-        <header class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-blue-900 mb-2">Bogle3</h1>
-            <p class="text-gray-600">Simple 3-Fund Portfolio Calculator</p>
-        </header>
+        <div class="grid lg:grid-cols-4 gap-6">
+            <!-- Sidebar -->
+            <div class="lg:col-span-1" x-data="{ showInfo: false }">
+                <div class="lg:sticky lg:top-6 space-y-4">
+                    <!-- App Name -->
+                    <div class="flex items-center justify-between lg:block">
+                        <div>
+                            <h1 class="text-4xl font-bold text-blue-900 mb-1">Bogle3</h1>
+                            <p class="text-sm text-gray-600">3-Fund Portfolio Calculator</p>
+                        </div>
+                        <!-- Mobile toggle -->
+                        <button @click="showInfo = !showInfo" class="lg:hidden text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1">
+                            <span x-text="showInfo ? 'Hide' : 'Info'">Info</span>
+                            <svg class="w-4 h-4 transition-transform" :class="showInfo ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                    </div>
 
-        <!-- How to Use -->
-        <div class="bg-blue-50 rounded-lg p-4 mb-6 text-sm text-blue-800">
-            <h3 class="font-semibold mb-2">How to use this calculator:</h3>
-            <ol class="list-decimal list-inside space-y-1">
-                <li>Enter your investment amount</li>
-                <li>Enter your age (or adjust sliders manually)</li>
-                <li>Set International % of your stocks (Bogleheads recommend 20-40%)</li>
-                <li>See the exact dollar amounts to invest in each fund</li>
-            </ol>
-        </div>
+                    <!-- Collapsible content for mobile -->
+                    <div x-show="showInfo" x-transition class="lg:hidden space-y-6">
+                        <!-- About -->
+                        <div class="text-sm text-gray-600 leading-relaxed">
+                            <h3 class="font-semibold text-gray-900 mb-2">What is this?</h3>
+                            <p class="mb-3">A simple calculator for the <a href="https://www.bogleheads.org/wiki/Three-fund_portfolio" target="_blank" rel="noopener noreferrer" class="font-semibold text-gray-800 underline hover:text-blue-700">Bogleheads 3-Fund Portfolio</a> — a low-cost, diversified investment strategy using just three index funds:</p>
+                            <ul class="list-disc list-outside ml-4 space-y-1 mb-3">
+                                <li>US Total Stock Market</li>
+                                <li>International Stock Market</li>
+                                <li>Total Bond Market</li>
+                            </ul>
+                            <p>This tool helps you split your investment dollars across these three funds at your preferred allocation.</p>
+                        </div>
+
+                        <!-- Instructions -->
+                        <div class="text-sm text-gray-600 leading-relaxed">
+                            <h3 class="font-semibold text-gray-900 mb-2">How to use</h3>
+                            <ol class="list-decimal list-outside ml-4 space-y-2">
+                                <li>Enter investment amount</li>
+                                <li>Enter your age to auto-set stocks/bonds, or adjust slider</li>
+                                <li>Set International % of stocks (20-40% recommended)</li>
+                                <li>Click tickers to select your preferred fund</li>
+                                <li>Purchase shares at your broker to match the dollar amounts</li>
+                            </ol>
+                        </div>
+                    </div>
+
+                    <!-- Desktop only content (always visible) -->
+                    <div class="hidden lg:block space-y-6">
+                        <!-- About -->
+                        <div class="text-sm text-gray-600 leading-relaxed">
+                            <h3 class="font-semibold text-gray-900 mb-2">What is this?</h3>
+                            <p class="mb-3">A simple calculator for the <a href="https://www.bogleheads.org/wiki/Three-fund_portfolio" target="_blank" rel="noopener noreferrer" class="font-semibold text-gray-800 underline hover:text-blue-700">Bogleheads 3-Fund Portfolio</a> — a low-cost, diversified investment strategy using just three index funds:</p>
+                            <ul class="list-disc list-outside ml-4 space-y-1 mb-3">
+                                <li>US Total Stock Market</li>
+                                <li>International Stock Market</li>
+                                <li>Total Bond Market</li>
+                            </ul>
+                            <p>This tool helps you split your investment dollars across these three funds at your preferred allocation.</p>
+                        </div>
+
+                        <!-- Instructions -->
+                        <div class="text-sm text-gray-600 leading-relaxed">
+                            <h3 class="font-semibold text-gray-900 mb-2">How to use</h3>
+                            <ol class="list-decimal list-outside ml-4 space-y-2">
+                                <li>Enter investment amount</li>
+                                <li>Enter your age to auto-set stocks/bonds, or adjust slider</li>
+                                <li>Set International % of stocks (20-40% recommended)</li>
+                                <li>Click tickers to select your preferred fund</li>
+                                <li>Purchase shares at your broker to match the dollar amounts</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Calculator -->
+            <div class="lg:col-span-3 flex justify-center">
+                <div class="w-full max-w-2xl">
 
         <!-- Total Investment Input -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -41,71 +103,7 @@
             </div>
         </div>
 
-        <!-- Allocation Sliders -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
-                <h2 class="text-lg font-semibold">Asset Allocation</h2>
-                <div class="flex items-center gap-2">
-                    <label class="text-sm text-gray-600">Age:</label>
-                    <input
-                        type="number"
-                        x-model="age"
-                        @blur="setAllocationFromAge()"
-                        @keydown.enter="setAllocationFromAge()"
-                        min="18"
-                        max="100"
-                        class="w-16 px-2 py-1.5 h-8 border border-gray-300 rounded text-center text-sm leading-none"
-                        placeholder="25"
-                    >
-                </div>
-            </div>
-
-            <!-- Stocks/Bonds Split -->
-            <div class="mb-6 p-4 bg-gray-50 rounded-lg">
-                <div class="flex justify-between mb-2">
-                    <label class="text-sm font-medium text-gray-700">Stocks vs Bonds</label>
-                    <span class="text-sm font-semibold text-gray-900" x-text="stocksPercent + '% Stocks / ' + (100 - stocksPercent) + '% Bonds'"></span>
-                </div>
-                <input
-                    type="range"
-                    x-model="stocksPercent"
-                    min="0"
-                    max="100"
-                    class="w-full h-3 bg-gradient-to-r from-yellow-200 to-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-                >
-                <div class="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>100% Bonds</span>
-                    <span>50/50</span>
-                    <span>100% Stocks</span>
-                </div>
-            </div>
-
-            <!-- International % of Stocks -->
-            <div class="mb-4 p-4 bg-gray-50 rounded-lg">
-                <div class="flex justify-between mb-2">
-                    <label class="text-sm font-medium text-gray-700">International % of Stocks</label>
-                    <span class="text-sm font-semibold text-gray-900" x-text="intlPercentOfStocks + '%'"></span>
-                </div>
-                <input
-                    type="range"
-                    x-model="intlPercentOfStocks"
-                    min="0"
-                    max="60"
-                    class="w-full h-3 bg-gradient-to-r from-blue-200 to-green-200 rounded-lg appearance-none cursor-pointer accent-green-600"
-                >
-                <div class="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>0% (All US)</span>
-                    <span>20%</span>
-                    <span>40%</span>
-                    <span>60%</span>
-                </div>
-                <div class="text-xs text-gray-400 mt-2">
-                    US: <span x-text="usStockPercent + '%'"></span> | International: <span x-text="intlStockPercent + '%'"></span> of total portfolio
-                </div>
-            </div>
-        </div>
-
-        <!-- Results -->
+        <!-- Investment Breakdown -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
             <h2 class="text-lg font-semibold mb-4">Investment Breakdown</h2>
 
@@ -180,7 +178,6 @@
                 </div>
             </div>
 
-
             <!-- Total -->
             <div class="mt-4 pt-4 border-t border-gray-200">
                 <div class="flex justify-between items-center">
@@ -189,15 +186,84 @@
                 </div>
             </div>
 
+            </div><!-- /Investment Breakdown -->
+
+        <!-- Allocation Sliders -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+                <h2 class="text-lg font-semibold">Asset Allocation</h2>
+                <div class="flex items-center gap-2">
+                    <label class="text-sm text-gray-600">Age:</label>
+                    <input
+                        type="number"
+                        x-model="age"
+                        @blur="setAllocationFromAge()"
+                        @keydown.enter="setAllocationFromAge()"
+                        min="18"
+                        max="100"
+                        class="w-16 px-2 py-1.5 h-8 border border-gray-300 rounded text-center text-sm leading-none"
+                        placeholder="25"
+                    >
+                </div>
+            </div>
+
+            <!-- Stocks/Bonds Split -->
+            <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                <div class="flex justify-between mb-2">
+                    <label class="text-sm font-medium text-gray-700">Stocks vs Bonds</label>
+                    <span class="text-sm font-semibold text-gray-900" x-text="stocksPercent + '% Stocks / ' + (100 - stocksPercent) + '% Bonds'"></span>
+                </div>
+                <input
+                    type="range"
+                    x-model="stocksPercent"
+                    min="0"
+                    max="100"
+                    class="w-full h-3 bg-gradient-to-r from-yellow-200 to-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                >
+                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>100% Bonds</span>
+                    <span>50/50</span>
+                    <span>100% Stocks</span>
+                </div>
+            </div>
+
+            <!-- International % of Stocks -->
+            <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+                <div class="flex justify-between mb-2">
+                    <label class="text-sm font-medium text-gray-700">International % of Stocks</label>
+                    <span class="text-sm font-semibold text-gray-900" x-text="intlPercentOfStocks + '%'"></span>
+                </div>
+                <input
+                    type="range"
+                    x-model="intlPercentOfStocks"
+                    min="0"
+                    max="60"
+                    class="w-full h-3 bg-gradient-to-r from-blue-200 to-green-200 rounded-lg appearance-none cursor-pointer accent-green-600"
+                >
+                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>0% (All US)</span>
+                    <span>20%</span>
+                    <span>40%</span>
+                    <span>60%</span>
+                </div>
+                <div class="text-xs text-gray-400 mt-2">
+                    US: <span x-text="usStockPercent + '%'"></span> | International: <span x-text="intlStockPercent + '%'"></span> of total portfolio
+                </div>
+            </div>
         </div>
 
-        <!-- Footer -->
-        <footer class="mt-8 text-center text-sm text-gray-500">
-            <p>Invest at your own risk. Not financial advice.</p>
-            <p class="mt-1">Learn about the <a href="https://www.bogleheads.org/wiki/Three-fund_portfolio" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">3-Fund Portfolio</a> paradigm</p>
-        </footer>
+        </div><!-- /max-w-2xl -->
+        </div><!-- /main calculator -->
+        </div><!-- /grid -->
 
-    </div>
+    </div><!-- /max-w-6xl container -->
+
+    <!-- Footer - Full Width -->
+    <footer class="mt-8 py-6 text-center text-sm text-gray-500">
+        <div class="max-w-6xl mx-auto px-6">
+            <p>Invest at your own risk. Not financial advice.</p>
+        </div>
+    </footer>
 
     <script>
         function bogle3Data() {
