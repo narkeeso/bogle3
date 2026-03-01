@@ -8,209 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen">
-    <div class="max-w-2xl mx-auto p-6" x-data="{
-        totalAmount: 100,
-        usStock: 60,
-        intlStock: 20,
-        bonds: 20,
-        usLocked: false,
-        intlLocked: false,
-        bondLocked: false,
-        advancedBonds: false,
-        bondTreasury: 50,
-        bondCorporate: 30,
-        bondTips: 20,
-
-        init() {
-            // Load from localStorage if available
-            const saved = localStorage.getItem('bogle3-allocation');
-            if (saved) {
-                try {
-                    const data = JSON.parse(saved);
-                    if (data.usStock !== undefined) this.usStock = data.usStock;
-                    if (data.intlStock !== undefined) this.intlStock = data.intlStock;
-                    if (data.bonds !== undefined) this.bonds = data.bonds;
-                    if (data.bondTreasury !== undefined) this.bondTreasury = data.bondTreasury;
-                    if (data.bondCorporate !== undefined) this.bondCorporate = data.bondCorporate;
-                    if (data.bondTips !== undefined) this.bondTips = data.bondTips;
-                } catch (e) {
-                    console.error('Failed to load saved allocation:', e);
-                }
-            }
-
-            // Watch for changes and save
-            this.$watch('usStock', () => this.saveAllocation());
-            this.$watch('intlStock', () => this.saveAllocation());
-            this.$watch('bonds', () => this.saveAllocation());
-            this.$watch('bondTreasury', () => this.saveAllocation());
-            this.$watch('bondCorporate', () => this.saveAllocation());
-            this.$watch('bondTips', () => this.saveAllocation());
-        },
-
-        saveAllocation() {
-            const data = {
-                usStock: this.usStock,
-                intlStock: this.intlStock,
-                bonds: this.bonds,
-                bondTreasury: this.bondTreasury,
-                bondCorporate: this.bondCorporate,
-                bondTips: this.bondTips,
-                version: '1.0'
-            };
-            localStorage.setItem('bogle3-allocation', JSON.stringify(data));
-        },
-
-        get totalPercent() {
-            return this.usStock + this.intlStock + this.bonds;
-        },
-
-        adjustUSStock(val) {
-            val = parseInt(val) || 0;
-            const lockedTotal = (this.intlLocked ? this.intlStock : 0) + (this.bondLocked ? this.bonds : 0);
-            const maxAllowed = 100 - lockedTotal;
-
-            // Clamp value to valid range
-            this.usStock = Math.max(0, Math.min(val, maxAllowed));
-
-            // Remaining goes to unlocked sliders
-            const remaining = 100 - this.usStock - lockedTotal;
-            const unlocked = [];
-            if (!this.intlLocked) unlocked.push('intl');
-            if (!this.bondLocked) unlocked.push('bond');
-
-            if (unlocked.length === 1) {
-                if (unlocked[0] === 'intl') this.intlStock = remaining;
-                else this.bonds = remaining;
-            } else if (unlocked.length === 2) {
-                const currentTotal = this.intlStock + this.bonds;
-                if (currentTotal > 0) {
-                    this.intlStock = Math.round(remaining * (this.intlStock / currentTotal));
-                    this.bonds = remaining - this.intlStock;
-                } else {
-                    this.intlStock = Math.round(remaining / 2);
-                    this.bonds = remaining - this.intlStock;
-                }
-            }
-        },
-
-        adjustIntlStock(val) {
-            val = parseInt(val) || 0;
-            const lockedTotal = (this.usLocked ? this.usStock : 0) + (this.bondLocked ? this.bonds : 0);
-            const maxAllowed = 100 - lockedTotal;
-
-            this.intlStock = Math.max(0, Math.min(val, maxAllowed));
-
-            const remaining = 100 - this.intlStock - lockedTotal;
-            const unlocked = [];
-            if (!this.usLocked) unlocked.push('us');
-            if (!this.bondLocked) unlocked.push('bond');
-
-            if (unlocked.length === 1) {
-                if (unlocked[0] === 'us') this.usStock = remaining;
-                else this.bonds = remaining;
-            } else if (unlocked.length === 2) {
-                const currentTotal = this.usStock + this.bonds;
-                if (currentTotal > 0) {
-                    this.usStock = Math.round(remaining * (this.usStock / currentTotal));
-                    this.bonds = remaining - this.usStock;
-                } else {
-                    this.usStock = Math.round(remaining / 2);
-                    this.bonds = remaining - this.usStock;
-                }
-            }
-        },
-
-        adjustBonds(val) {
-            val = parseInt(val) || 0;
-            const lockedTotal = (this.usLocked ? this.usStock : 0) + (this.intlLocked ? this.intlStock : 0);
-            const maxAllowed = 100 - lockedTotal;
-
-            this.bonds = Math.max(0, Math.min(val, maxAllowed));
-
-            const remaining = 100 - this.bonds - lockedTotal;
-            const unlocked = [];
-            if (!this.usLocked) unlocked.push('us');
-            if (!this.intlLocked) unlocked.push('intl');
-
-            if (unlocked.length === 1) {
-                if (unlocked[0] === 'us') this.usStock = remaining;
-                else this.intlStock = remaining;
-            } else if (unlocked.length === 2) {
-                const currentTotal = this.usStock + this.intlStock;
-                if (currentTotal > 0) {
-                    this.usStock = Math.round(remaining * (this.usStock / currentTotal));
-                    this.intlStock = remaining - this.usStock;
-                } else {
-                    this.usStock = Math.round(remaining / 2);
-                    this.intlStock = remaining - this.usStock;
-                }
-            }
-        },
-
-        toggleLock(type) {
-            // Calculate what would be locked if we lock this one
-            let lockedTotal = 0;
-            if (type !== 'us' && this.usLocked) lockedTotal += this.usStock;
-            if (type !== 'intl' && this.intlLocked) lockedTotal += this.intlStock;
-            if (type !== 'bond' && this.bondLocked) lockedTotal += this.bonds;
-
-            // Add the one we're trying to lock
-            if (type === 'us') lockedTotal += this.usStock;
-            else if (type === 'intl') lockedTotal += this.intlStock;
-            else if (type === 'bond') lockedTotal += this.bonds;
-
-            // Count locks after this toggle
-            const lockCount = (this.usLocked ? 1 : 0) + (this.intlLocked ? 1 : 0) + (this.bondLocked ? 1 : 0);
-            const newLockCount = this[type + 'Locked'] ? lockCount - 1 : lockCount + 1;
-
-            // Prevent lock if it would exceed 100% or lock all 3
-            if (!this[type + 'Locked'] && (lockedTotal > 100 || newLockCount > 2)) {
-                return; // Can't lock
-            }
-
-            if (type === 'us') this.usLocked = !this.usLocked;
-            else if (type === 'intl') this.intlLocked = !this.intlLocked;
-            else if (type === 'bond') this.bondLocked = !this.bondLocked;
-        },
-
-        lockedCount() {
-            return (this.usLocked ? 1 : 0) + (this.intlLocked ? 1 : 0) + (this.bondLocked ? 1 : 0);
-        },
-
-        get usStockAmount() {
-            return Math.round(this.totalAmount * (this.usStock / 100));
-        },
-
-        get intlStockAmount() {
-            return Math.round(this.totalAmount * (this.intlStock / 100));
-        },
-
-        get bondAmount() {
-            // Bonds gets remainder to ensure exact total matches
-            return this.totalAmount - this.usStockAmount - this.intlStockAmount;
-        },
-
-        get treasuryAmount() {
-            return Math.round(this.bondAmount * (this.bondTreasury / 100));
-        },
-
-        get corporateAmount() {
-            return Math.round(this.bondAmount * (this.bondCorporate / 100));
-        },
-
-        get tipsAmount() {
-            return Math.round(this.bondAmount * (this.bondTips / 100));
-        },
-
-        formatCurrency(amount) {
-            return new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'USD',
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-            }).format(amount);
-        }
-    }" x-init="init()">
+    <div class="max-w-2xl mx-auto p-6" x-data="bogle3Data()" x-init="init()">
 
         <!-- Header -->
         <header class="text-center mb-8">
@@ -223,8 +21,8 @@
             <h3 class="font-semibold mb-2">How to use this calculator:</h3>
             <ol class="list-decimal list-inside space-y-1">
                 <li>Enter your investment amount</li>
-                <li>Choose a preset (Aggressive/Moderate/Conservative) or adjust sliders</li>
-                <li>Click the lock icon to fix a percentage you want to keep</li>
+                <li>Enter your age (or adjust sliders manually)</li>
+                <li>Set International % of your stocks (Bogleheads recommend 20-40%)</li>
                 <li>See the exact dollar amounts to invest in each fund</li>
             </ol>
         </div>
@@ -245,151 +43,65 @@
 
         <!-- Allocation Sliders -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <div class="flex justify-between items-center mb-4">
+            <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
                 <h2 class="text-lg font-semibold">Asset Allocation</h2>
-                <span class="text-sm font-medium px-3 py-1 rounded-full bg-green-100 text-green-800">100%</span>
+                <div class="flex items-center gap-2">
+                    <label class="text-sm text-gray-600">Age:</label>
+                    <input
+                        type="number"
+                        x-model="age"
+                        @blur="setAllocationFromAge()"
+                        @keydown.enter="setAllocationFromAge()"
+                        min="18"
+                        max="100"
+                        class="w-16 px-2 py-1.5 h-8 border border-gray-300 rounded text-center text-sm leading-none"
+                        placeholder="25"
+                    >
+                </div>
             </div>
 
-            <!-- Quick Presets -->
-            <div class="flex gap-2 mb-4">
-                <button
-                    @click="usStock=80; intlStock=20; bonds=0"
-                    class="flex-1 px-3 py-2 text-sm rounded-lg transition font-medium"
-                    :class="usStock===80 && intlStock===20 && bonds===0 ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'"
-                >
-                    Aggressive
-                </button>
-                <button
-                    @click="usStock=60; intlStock=20; bonds=20"
-                    class="flex-1 px-3 py-2 text-sm rounded-lg transition font-medium"
-                    :class="usStock===60 && intlStock===20 && bonds===20 ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'"
-                >
-                    Moderate
-                </button>
-                <button
-                    @click="usStock=40; intlStock=20; bonds=40"
-                    class="flex-1 px-3 py-2 text-sm rounded-lg transition font-medium"
-                    :class="usStock===40 && intlStock===20 && bonds===40 ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-800 hover:bg-gray-300'"
-                >
-                    Conservative
-                </button>
-            </div>
-
-            <!-- US Stock -->
-            <div class="mb-4">
-                <div class="flex justify-between items-center mb-1">
-                    <div class="flex items-center gap-2">
-                        <label class="text-sm font-medium text-gray-700">US Total Stock Market (VTI)</label>
-                        <button
-                            @click="toggleLock('us')"
-                            class="p-1 rounded hover:bg-gray-100 transition"
-                            :class="usLocked ? 'text-blue-600' : 'text-gray-400'"
-                            :title="usLocked ? 'Unlock' : 'Lock'"
-                            x-show="usLocked || lockedCount() < 2"
-                        >
-                            <svg x-show="usLocked" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
-                            </svg>
-                            <svg x-show="!usLocked" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <span class="text-sm text-gray-600">
-                        <span x-text="usStock + '%'"></span>
-                        <span x-show="!usLocked && ((intlLocked ? intlStock : 0) + (bondLocked ? bonds : 0)) > 0" class="text-xs text-gray-400 ml-1">
-                            (max: <span x-text="100 - (intlLocked ? intlStock : 0) - (bondLocked ? bonds : 0)"></span>%)
-                        </span>
-                    </span>
+            <!-- Stocks/Bonds Split -->
+            <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                <div class="flex justify-between mb-2">
+                    <label class="text-sm font-medium text-gray-700">Stocks vs Bonds</label>
+                    <span class="text-sm font-semibold text-gray-900" x-text="stocksPercent + '% Stocks / ' + (100 - stocksPercent) + '% Bonds'"></span>
                 </div>
                 <input
                     type="range"
-                    :value="usStock"
-                    @input="adjustUSStock($event.target.value)"
+                    x-model="stocksPercent"
                     min="0"
-                    :max="100 - (intlLocked ? intlStock : 0) - (bondLocked ? bonds : 0)"
-                    :disabled="usLocked || lockedCount() === 2"
-                    class="w-full h-2 bg-blue-200 rounded-lg appearance-none accent-blue-600"
-                    :class="(usLocked || lockedCount() === 2) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'"
+                    max="100"
+                    class="w-full h-3 bg-gradient-to-r from-yellow-200 to-blue-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
                 >
+                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>100% Bonds</span>
+                    <span>50/50</span>
+                    <span>100% Stocks</span>
+                </div>
             </div>
 
-            <!-- International Stock -->
-            <div class="mb-4">
-                <div class="flex justify-between items-center mb-1">
-                    <div class="flex items-center gap-2">
-                        <label class="text-sm font-medium text-gray-700">International Stock (VXUS)</label>
-                        <button
-                            @click="toggleLock('intl')"
-                            class="p-1 rounded hover:bg-gray-100 transition"
-                            :class="intlLocked ? 'text-green-600' : 'text-gray-400'"
-                            :title="intlLocked ? 'Unlock' : 'Lock'"
-                            x-show="intlLocked || lockedCount() < 2"
-                        >
-                            <svg x-show="intlLocked" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
-                            </svg>
-                            <svg x-show="!intlLocked" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <span class="text-sm text-gray-600">
-                        <span x-text="intlStock + '%'"></span>
-                        <span x-show="!intlLocked && ((usLocked ? usStock : 0) + (bondLocked ? bonds : 0)) > 0" class="text-xs text-gray-400 ml-1">
-                            (max: <span x-text="100 - (usLocked ? usStock : 0) - (bondLocked ? bonds : 0)"></span>%)
-                        </span>
-                    </span>
+            <!-- International % of Stocks -->
+            <div class="mb-4 p-4 bg-gray-50 rounded-lg">
+                <div class="flex justify-between mb-2">
+                    <label class="text-sm font-medium text-gray-700">International % of Stocks</label>
+                    <span class="text-sm font-semibold text-gray-900" x-text="intlPercentOfStocks + '%'"></span>
                 </div>
                 <input
                     type="range"
-                    :value="intlStock"
-                    @input="adjustIntlStock($event.target.value)"
+                    x-model="intlPercentOfStocks"
                     min="0"
-                    :max="100 - (usLocked ? usStock : 0) - (bondLocked ? bonds : 0)"
-                    :disabled="intlLocked || lockedCount() === 2"
-                    class="w-full h-2 bg-green-200 rounded-lg appearance-none accent-green-600"
-                    :class="(intlLocked || lockedCount() === 2) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'"
+                    max="60"
+                    class="w-full h-3 bg-gradient-to-r from-blue-200 to-green-200 rounded-lg appearance-none cursor-pointer accent-green-600"
                 >
-            </div>
-
-            <!-- Bonds -->
-            <div class="mb-4">
-                <div class="flex justify-between items-center mb-1">
-                    <div class="flex items-center gap-2">
-                        <label class="text-sm font-medium text-gray-700">Total Bond Market (BND)</label>
-                        <button
-                            @click="toggleLock('bond')"
-                            class="p-1 rounded hover:bg-gray-100 transition"
-                            :class="bondLocked ? 'text-yellow-600' : 'text-gray-400'"
-                            :title="bondLocked ? 'Unlock' : 'Lock'"
-                            x-show="bondLocked || lockedCount() < 2"
-                        >
-                            <svg x-show="bondLocked" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
-                            </svg>
-                            <svg x-show="!bondLocked" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <span class="text-sm text-gray-600">
-                        <span x-text="bonds + '%'"></span>
-                        <span x-show="!bondLocked && ((usLocked ? usStock : 0) + (intlLocked ? intlStock : 0)) > 0" class="text-xs text-gray-400 ml-1">
-                            (max: <span x-text="100 - (usLocked ? usStock : 0) - (intlLocked ? intlStock : 0)"></span>%)
-                        </span>
-                    </span>
+                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>0% (All US)</span>
+                    <span>20%</span>
+                    <span>40%</span>
+                    <span>60%</span>
                 </div>
-                <input
-                    type="range"
-                    :value="bonds"
-                    @input="adjustBonds($event.target.value)"
-                    min="0"
-                    :max="100 - (usLocked ? usStock : 0) - (intlLocked ? intlStock : 0)"
-                    :disabled="bondLocked || lockedCount() === 2"
-                    class="w-full h-2 bg-yellow-200 rounded-lg appearance-none accent-yellow-600"
-                    :class="(bondLocked || lockedCount() === 2) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'"
-                >
+                <div class="text-xs text-gray-400 mt-2">
+                    US: <span x-text="usStockPercent + '%'"></span> | International: <span x-text="intlStockPercent + '%'"></span> of total portfolio
+                </div>
             </div>
         </div>
 
@@ -397,123 +109,86 @@
         <div class="bg-white rounded-lg shadow-md p-6 mb-6">
             <h2 class="text-lg font-semibold mb-4">Investment Breakdown</h2>
 
-            <div class="space-y-3">
+            <div class="grid grid-cols-3 gap-3">
                 <!-- US Stock Result -->
-                <div class="p-3 bg-blue-50 rounded-lg">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <div class="font-medium text-blue-900">US Total Stock Market</div>
-                            <div class="text-sm text-blue-600">VTI</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="font-bold text-blue-900" x-text="formatCurrency(usStockAmount)">$6,000</div>
-                            <div class="text-sm text-blue-600" x-text="usStock + '%'"></div>
-                        </div>
+                <div class="p-3 bg-blue-50 rounded-lg text-center relative">
+                    <div class="font-medium text-blue-900 text-sm">US Stock</div>
+                    <button
+                        @click="showUSAlternatives = !showUSAlternatives"
+                        class="text-xs text-blue-600 mb-1 hover:underline cursor-pointer font-mono bg-blue-100 px-1.5 py-0.5 rounded"
+                        x-text="selectedUSFund"
+                    >VTI</button>
+                    <div x-show="showUSAlternatives" @click.away="showUSAlternatives = false" class="absolute z-10 mt-1 bg-white border border-blue-200 rounded shadow-lg p-2 text-xs text-left w-36 left-1/2 -translate-x-1/2">
+                        <template x-for="fund in usFunds" :key="fund.ticker">
+                            <button
+                                @click="selectUSFund(fund.ticker)"
+                                class="block w-full text-left px-2 py-1 rounded hover:bg-blue-50"
+                                :class="selectedUSFund === fund.ticker ? 'bg-blue-100 text-blue-800 font-semibold' : 'text-gray-700'"
+                            >
+                                <span x-text="fund.ticker"></span>
+                                <span class="text-gray-400 text-xs" x-text="fund.name"></span>
+                            </button>
+                        </template>
                     </div>
-                    <div class="mt-2 text-xs text-blue-700">
-                        Also valid: VTSAX, SWTSX, FSKAX, ITOT
-                    </div>
+                    <div class="font-bold text-blue-900 text-xl" x-text="formatCurrency(usStockAmount)">$60</div>
                 </div>
 
                 <!-- International Stock Result -->
-                <div class="p-3 bg-green-50 rounded-lg">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <div class="font-medium text-green-900">International Stock</div>
-                            <div class="text-sm text-green-600">VXUS</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="font-bold text-green-900" x-text="formatCurrency(intlStockAmount)">$2,000</div>
-                            <div class="text-sm text-green-600" x-text="intlStock + '%'"></div>
-                        </div>
+                <div class="p-3 bg-green-50 rounded-lg text-center relative">
+                    <div class="font-medium text-green-900 text-sm">International</div>
+                    <button
+                        @click="showIntlAlternatives = !showIntlAlternatives"
+                        class="text-xs text-green-600 mb-1 hover:underline cursor-pointer font-mono bg-green-100 px-1.5 py-0.5 rounded"
+                        x-text="selectedIntlFund"
+                    >VXUS</button>
+                    <div x-show="showIntlAlternatives" @click.away="showIntlAlternatives = false" class="absolute z-10 mt-1 bg-white border border-green-200 rounded shadow-lg p-2 text-xs text-left w-36 left-1/2 -translate-x-1/2">
+                        <template x-for="fund in intlFunds" :key="fund.ticker">
+                            <button
+                                @click="selectIntlFund(fund.ticker)"
+                                class="block w-full text-left px-2 py-1 rounded hover:bg-green-50"
+                                :class="selectedIntlFund === fund.ticker ? 'bg-green-100 text-green-800 font-semibold' : 'text-gray-700'"
+                            >
+                                <span x-text="fund.ticker"></span>
+                                <span class="text-gray-400 text-xs" x-text="fund.name"></span>
+                            </button>
+                        </template>
                     </div>
-                    <div class="mt-2 text-xs text-green-700">
-                        Also valid: VTIAX, SWISX, FTIHX, IXUS
-                    </div>
+                    <div class="font-bold text-green-900 text-xl" x-text="formatCurrency(intlStockAmount)">$20</div>
                 </div>
 
                 <!-- Bond Result -->
-                <div class="p-3 bg-yellow-50 rounded-lg">
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <div class="font-medium text-yellow-900">Total Bond Market</div>
-                            <div class="text-sm text-yellow-600">BND</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="font-bold text-yellow-900" x-text="formatCurrency(bondAmount)">$2,000</div>
-                            <div class="text-sm text-yellow-600" x-text="bonds + '%'"></div>
-                        </div>
+                <div class="p-3 bg-yellow-50 rounded-lg text-center relative">
+                    <div class="font-medium text-yellow-900 text-sm">Bonds</div>
+                    <button
+                        @click="showBondAlternatives = !showBondAlternatives"
+                        class="text-xs text-yellow-600 mb-1 hover:underline cursor-pointer font-mono bg-yellow-100 px-1.5 py-0.5 rounded"
+                        x-text="selectedBondFund"
+                    >BND</button>
+                    <div x-show="showBondAlternatives" @click.away="showBondAlternatives = false" class="absolute z-10 mt-1 bg-white border border-yellow-200 rounded shadow-lg p-2 text-xs text-left w-36 left-1/2 -translate-x-1/2">
+                        <template x-for="fund in bondFunds" :key="fund.ticker">
+                            <button
+                                @click="selectBondFund(fund.ticker)"
+                                class="block w-full text-left px-2 py-1 rounded hover:bg-yellow-50"
+                                :class="selectedBondFund === fund.ticker ? 'bg-yellow-100 text-yellow-800 font-semibold' : 'text-gray-700'"
+                            >
+                                <span x-text="fund.ticker"></span>
+                                <span class="text-gray-400 text-xs" x-text="fund.name"></span>
+                            </button>
+                        </template>
                     </div>
-                    <div class="mt-2 text-xs text-yellow-700">
-                        Also valid: VBTLX, SWAGX, FXNAX, AGG
-                    </div>
+                    <div class="font-bold text-yellow-900 text-xl" x-text="formatCurrency(bondAmount)">$20</div>
                 </div>
             </div>
+
 
             <!-- Total -->
             <div class="mt-4 pt-4 border-t border-gray-200">
                 <div class="flex justify-between items-center">
                     <span class="font-semibold">Total</span>
-                    <span class="font-bold text-xl" x-text="formatCurrency(usStockAmount + intlStockAmount + bondAmount)">$10,000</span>
+                    <span class="font-bold text-xl" x-text="formatCurrency(usStockAmount + intlStockAmount + bondAmount)">$100</span>
                 </div>
             </div>
-        </div>
 
-        <!-- Advanced Bond Split (Hidden by default) -->
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <button
-                @click="advancedBonds = !advancedBonds"
-                class="flex items-center justify-between w-full text-left"
-            >
-                <span class="text-sm font-medium text-gray-600">Advanced: Bond Sub-Split (Optional)</span>
-                <svg
-                    class="w-5 h-5 text-gray-400 transform transition-transform"
-                    :class="advancedBonds ? 'rotate-180' : ''"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
-            </button>
-
-            <div x-show="advancedBonds" x-collapse class="mt-4 pt-4 border-t border-gray-100">
-                <div class="text-sm text-gray-600 mb-4">Break down your bond allocation further:</div>
-
-                <!-- Treasury -->
-                <div class="mb-3">
-                    <div class="flex justify-between mb-1">
-                        <label class="text-sm text-gray-700">US Treasuries (VGIT)</label>
-                        <span class="text-sm text-gray-600" x-text="bondTreasury + '%'">50%</span>
-                    </div>
-                    <input type="range" x-model="bondTreasury" min="0" max="100" class="w-full h-2 bg-gray-200 rounded-lg accent-gray-600">
-                    <div class="text-right text-sm text-gray-500 mt-1" x-text="formatCurrency(treasuryAmount)">$1,000</div>
-                </div>
-
-                <!-- Corporate -->
-                <div class="mb-3">
-                    <div class="flex justify-between mb-1">
-                        <label class="text-sm text-gray-700">Corporate Bonds (VCIT)</label>
-                        <span class="text-sm text-gray-600" x-text="bondCorporate + '%'">30%</span>
-                    </div>
-                    <input type="range" x-model="bondCorporate" min="0" max="100" class="w-full h-2 bg-gray-200 rounded-lg accent-gray-600">
-                    <div class="text-right text-sm text-gray-500 mt-1" x-text="formatCurrency(corporateAmount)">$600</div>
-                </div>
-
-                <!-- TIPS -->
-                <div class="mb-3">
-                    <div class="flex justify-between mb-1">
-                        <label class="text-sm text-gray-700">TIPS Inflation-Protected (SCHP)</label>
-                        <span class="text-sm text-gray-600" x-text="bondTips + '%'">20%</span>
-                    </div>
-                    <input type="range" x-model="bondTips" min="0" max="100" class="w-full h-2 bg-gray-200 rounded-lg accent-gray-600">
-                    <div class="text-right text-sm text-gray-500 mt-1" x-text="formatCurrency(tipsAmount)">$400</div>
-                </div>
-
-                <div x-show="bondTreasury + bondCorporate + bondTips !== 100" class="text-xs text-red-600 mt-2">
-                    Bond sub-split total: <span x-text="bondTreasury + bondCorporate + bondTips"></span>% (should equal 100%)
-                </div>
-            </div>
         </div>
 
         <!-- Footer -->
@@ -523,5 +198,140 @@
         </footer>
 
     </div>
+
+    <script>
+        function bogle3Data() {
+            return {
+                totalAmount: 100,
+                age: 25,
+                stocksPercent: 60,
+                intlPercentOfStocks: 25,
+                showUSAlternatives: false,
+                showIntlAlternatives: false,
+                showBondAlternatives: false,
+                selectedUSFund: 'VTI',
+                selectedIntlFund: 'VXUS',
+                selectedBondFund: 'BND',
+
+                usFunds: [
+                    { ticker: 'VTI', name: 'Vanguard' },
+                    { ticker: 'VTSAX', name: 'Vanguard Admiral' },
+                    { ticker: 'SWTSX', name: 'Schwab' },
+                    { ticker: 'FSKAX', name: 'Fidelity' },
+                    { ticker: 'ITOT', name: 'iShares' }
+                ],
+
+                intlFunds: [
+                    { ticker: 'VXUS', name: 'Vanguard' },
+                    { ticker: 'VTIAX', name: 'Vanguard Admiral' },
+                    { ticker: 'SWISX', name: 'Schwab' },
+                    { ticker: 'FTIHX', name: 'Fidelity' },
+                    { ticker: 'IXUS', name: 'iShares' }
+                ],
+
+                bondFunds: [
+                    { ticker: 'BND', name: 'Vanguard' },
+                    { ticker: 'VBTLX', name: 'Vanguard Admiral' },
+                    { ticker: 'SWAGX', name: 'Schwab' },
+                    { ticker: 'FXNAX', name: 'Fidelity' },
+                    { ticker: 'AGG', name: 'iShares' }
+                ],
+
+                init() {
+                    const saved = localStorage.getItem('bogle3-allocation');
+                    if (saved) {
+                        try {
+                            const data = JSON.parse(saved);
+                            if (data.age != null) this.age = data.age;
+                            if (data.stocksPercent != null) this.stocksPercent = data.stocksPercent;
+                            if (data.intlPercentOfStocks != null) this.intlPercentOfStocks = data.intlPercentOfStocks;
+                            if (data.selectedUSFund != null) this.selectedUSFund = data.selectedUSFund;
+                            if (data.selectedIntlFund != null) this.selectedIntlFund = data.selectedIntlFund;
+                            if (data.selectedBondFund != null) this.selectedBondFund = data.selectedBondFund;
+                        } catch (e) {
+                            console.error('Failed to load saved allocation:', e);
+                        }
+                    }
+
+                    // Debounced auto-apply for age
+                    let ageTimeout;
+                    this.$watch('age', (val) => {
+                        this.saveAllocation();
+                        clearTimeout(ageTimeout);
+                        ageTimeout = setTimeout(() => {
+                            this.setAllocationFromAge();
+                        }, 500);
+                    });
+                    this.$watch('stocksPercent', () => this.saveAllocation());
+                    this.$watch('intlPercentOfStocks', () => this.saveAllocation());
+                    this.$watch('selectedUSFund', () => this.saveAllocation());
+                    this.$watch('selectedIntlFund', () => this.saveAllocation());
+                    this.$watch('selectedBondFund', () => this.saveAllocation());
+                },
+
+                saveAllocation() {
+                    const data = {
+                        age: this.age,
+                        stocksPercent: this.stocksPercent,
+                        intlPercentOfStocks: this.intlPercentOfStocks,
+                        selectedUSFund: this.selectedUSFund,
+                        selectedIntlFund: this.selectedIntlFund,
+                        selectedBondFund: this.selectedBondFund,
+                        version: '2.2'
+                    };
+                    localStorage.setItem('bogle3-allocation', JSON.stringify(data));
+                },
+
+                selectUSFund(fund) {
+                    this.selectedUSFund = fund;
+                    this.showUSAlternatives = false;
+                },
+
+                selectIntlFund(fund) {
+                    this.selectedIntlFund = fund;
+                    this.showIntlAlternatives = false;
+                },
+
+                selectBondFund(fund) {
+                    this.selectedBondFund = fund;
+                    this.showBondAlternatives = false;
+                },
+
+                setAllocationFromAge() {
+                    const ageNum = parseInt(this.age) || 40;
+                    this.stocksPercent = Math.max(20, Math.min(100, 100 - ageNum));
+                },
+
+                get usStockPercent() {
+                    return Math.round(this.stocksPercent * (1 - this.intlPercentOfStocks / 100));
+                },
+
+                get intlStockPercent() {
+                    return Math.round(this.stocksPercent * (this.intlPercentOfStocks / 100));
+                },
+
+                get usStockAmount() {
+                    return Math.round(this.totalAmount * (this.usStockPercent / 100));
+                },
+
+                get intlStockAmount() {
+                    return Math.round(this.totalAmount * (this.intlStockPercent / 100));
+                },
+
+                get bondAmount() {
+                    return this.totalAmount - this.usStockAmount - this.intlStockAmount;
+                },
+
+                formatCurrency(amount) {
+                    return new Intl.NumberFormat('en-US', {
+                        style: 'currency',
+                        currency: 'USD',
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
+                    }).format(amount);
+                }
+            };
+        }
+    </script>
 </body>
 </html>
